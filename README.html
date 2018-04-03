@@ -1,0 +1,138 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title>Práctica 2: Cliente web para batallas RPG</title>
+  <style type="text/css">code{white-space: pre;}</style>
+  <style type="text/css">
+div.sourceCode { overflow-x: auto; }
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code > span.dt { color: #902000; } /* DataType */
+code > span.dv { color: #40a070; } /* DecVal */
+code > span.bn { color: #40a070; } /* BaseN */
+code > span.fl { color: #40a070; } /* Float */
+code > span.ch { color: #4070a0; } /* Char */
+code > span.st { color: #4070a0; } /* String */
+code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code > span.ot { color: #007020; } /* Other */
+code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code > span.fu { color: #06287e; } /* Function */
+code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+code > span.cn { color: #880000; } /* Constant */
+code > span.sc { color: #4070a0; } /* SpecialChar */
+code > span.vs { color: #4070a0; } /* VerbatimString */
+code > span.ss { color: #bb6688; } /* SpecialString */
+code > span.im { } /* Import */
+code > span.va { color: #19177c; } /* Variable */
+code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code > span.op { color: #666666; } /* Operator */
+code > span.bu { } /* BuiltIn */
+code > span.ex { } /* Extension */
+code > span.pp { color: #bc7a00; } /* Preprocessor */
+code > span.at { color: #7d9029; } /* Attribute */
+code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+  </style>
+  <link rel="stylesheet" href="docs.css" type="text/css" />
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_CHTML-full" type="text/javascript"></script>
+</head>
+<body>
+<div id="header">
+<h1 class="title">Práctica 2: Cliente web para batallas RPG</h1>
+</div>
+<h2 id="enunciado">Enunciado</h2>
+<p>La práctica consiste en implementar un cliente visual (en este caso, <strong>una página web</strong>) para el juego de batallas de la práctica anterior.</p>
+<div class="figure">
+<img src="doc-images/screenshot.png" alt="Captura de pantalla del cliente" />
+<p class="caption">Captura de pantalla del cliente</p>
+</div>
+<p>Como punto de partida, se ha provisto de un esquelto de projecto con los siguientes archivos:</p>
+<ul>
+<li><code>index.html</code>: código HTML de partida</li>
+<li><code>styles.css</code>: hoja de estilo</li>
+<li><code>js/main.js</code>: el archivo de partida JavaScript</li>
+<li><code>js/rpg.js</code>: un archivo con el código de la librería de batallas de la práctica. También puedes usar tu propio código (consulta la sección de <em>Adaptación del código de la práctica anterior</em>).</li>
+</ul>
+<p>En este código inicial se incluye ya implementado lo siguiente:</p>
+<ul>
+<li>Carga desde el archivo HTML de los recursos JavaScript y CSS.</li>
+<li>Esqueleto HTML con una interfaz ya hecha. Puedes modificar este HTML para añadir más cosas, o cambiar elementos de la UI que no te convenzan, pero no es obligatorio.</li>
+<li>Creación de una instancia de <code>Battle</code>, así como el setup de las <em>parties</em> y la subscripción a los eventos más relevantes. La información de dichos eventos se imprime por consola (lo cual puedes eliminar/modificar a tu gusto).</li>
+</ul>
+<p>Hay que implementar las siguientes <em>features</em>:</p>
+<ul>
+<li>Mostrar los personajes de ambas <em>parties</em>, con sus ID’s, puntos de vida y de maná.</li>
+<li>Marcar qué personaje está seleccionado, cambiando su estilo o añadiendo un carácter especial (p.ej: <code>*</code>).</li>
+<li>Marcar qué personajes están muertos, cambiando su estilo o añadiendo un carácter especial (p.ej: <code>✝</code>).</li>
+<li>Implementar el menú de batalla con sus siguientes estados: selección de acción, selección de objetivo y selección de hechizo.</li>
+<li>Mostrar información de qué ha pasado cada turno (p.ej <code>Bat attacked Wizz, but missed</code>).</li>
+<li>Mostrar un mensaje al final de la batalla indicando cuál es el bando ganador.</li>
+</ul>
+<p>Para implementar estas <em>features</em> básicas, es recomendable seguir el procedimiento marcado por <strong>la <a href="GUIDE.html">guía</a> de la práctica</strong>.</p>
+<p>Opcionalmente, para subir nota:</p>
+<ul>
+<li>En el menú de selección de objetivo, mostrar en un color diferente los personajes de cada <em>party</em>.</li>
+<li>Al terminar la batalla, mostrar un botón o enlace para empezar una nueva (esto se puede hacer simplemente recargando la página).</li>
+<li>Crear la composición de una o ambas <em>parties</em> de manera aleatoria.</li>
+</ul>
+<h2 id="criterios-de-evaluación">Criterios de evaluación</h2>
+<p>Pueden ser <a href="criterios_evaluacion.html">consultados por separado</a>.</p>
+<h2 id="adaptación-del-código-de-la-práctica-anterior">Adaptación del código de la práctica anterior</h2>
+<p>En la versión actual de JavaScript no hay ningún mecanismo para gestionar módulos (por ejemplo, usando la función <code>require</code> como en Node). Es por esto que no podemos utilizar ni <code>require</code> ni <code>module.exports</code>.</p>
+<p>Además, ciertas partes que forman parte de la librería estándar de Node, como el módulo <code>events</code> para implementar eventos, no forman parte del estándar JavaScript.</p>
+<p>Hay una herramienta, <a href="http://browserify.org/"><strong>Browserify</strong></a> que nos permite transformar módulos de Node –con sus dependencias– en código que funciona en el browser. También incluye <a href="https://en.wikipedia.org/wiki/Polyfill"><strong>polyfills</strong></a>.</p>
+<h3 id="instrucciones">Instrucciones</h3>
+<h4 id="opción-a-usar-el-código-propio">Opción A: usar el código propio</h4>
+<p>Si has acabado la práctica anterior, puedes utilizar ese código en esta. Sigue los pasos que hay a continuación para adaptar ese código de Node a código que puedas ejecutar en el navegador.</p>
+<ol style="list-style-type: decimal">
+<li>Como vamos a necesitar dos módulos, <code>Battle</code> y <code>entities</code> (junto a sus dependencias), tenemos que crear un archivo “raíz” con esos dos. Crea en la raíz del directorio de la práctica anterior un archivo <code>export.js</code> con el siguiente contenido:</li>
+</ol>
+<div class="sourceCode"><pre class="sourceCode javascript"><code class="sourceCode javascript"><span class="va">module</span>.<span class="at">exports</span> <span class="op">=</span> <span class="op">{</span>
+  <span class="st">&quot;Battle&quot;</span><span class="op">:</span> <span class="at">require</span>(<span class="st">&#39;./src/Battle.js&#39;</span>)<span class="op">,</span>
+  <span class="st">&quot;entities&quot;</span><span class="op">:</span> <span class="at">require</span>(<span class="st">&#39;./src/entities.js&#39;</span>)
+<span class="op">};</span></code></pre></div>
+<ol start="2" style="list-style-type: decimal">
+<li>De nuevo en la raíz del directorio de la práctica anterior, instala Browserify con npm:</li>
+</ol>
+<pre><code>npm install --save-dev browserify</code></pre>
+<ol start="3" style="list-style-type: decimal">
+<li>Comprueba que el archivo <code>package.json</code> se ha modificado y que ahora aparece Browserify listado dentro de <code>devDependencies</code>. Por ejemplo:</li>
+</ol>
+<div class="sourceCode"><pre class="sourceCode json"><code class="sourceCode json"><span class="er">&quot;devDependencies&quot;:</span> <span class="fu">{</span>
+  <span class="dt">&quot;browserify&quot;</span><span class="fu">:</span> <span class="st">&quot;^13.1.0&quot;</span>
+<span class="fu">}</span></code></pre></div>
+<ol start="4" style="list-style-type: decimal">
+<li>Edita <code>package.json</code> para añadir un comando de script más, que ejecutará Browserify:</li>
+</ol>
+<div class="sourceCode"><pre class="sourceCode json"><code class="sourceCode json"><span class="er">&quot;scripts&quot;:</span> <span class="fu">{</span>
+  <span class="dt">&quot;bundle&quot;</span><span class="fu">:</span> <span class="st">&quot;browserify export.js --standalone RPG &gt; rpg.js&quot;</span>
+<span class="fu">}</span></code></pre></div>
+<ol start="5" style="list-style-type: decimal">
+<li>Ejecuta dicho comando, que generará un archivo <code>rpg.js</code> en el raíz de ese directorio.</li>
+</ol>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="ex">npm</span> run bundle</code></pre></div>
+<ol start="5" style="list-style-type: decimal">
+<li>Ahora puedes copiar <code>rpg.js</code> al directorio <code>js</code> de la práctica 2. Cuando se cargue el archivo con una etiqueta <code>&lt;script&gt;</code> en el navegador, habrá un objeto global <code>RPG</code>, con dos propiedades: <code>entities</code> y <code>Battle</code>.</li>
+</ol>
+<h4 id="opción-b-usar-una-implementación-de-terceros">Opción B: usar una implementación de terceros</h4>
+<p>Descargar el archivo <code>rpg.js</code>, que contiene una implementación de la práctica anterior.</p>
+<!-- TODO: incluir el enlace aquí -->
+<h2 id="auto-reload-del-navegador">Auto-reload del navegador</h2>
+<p>Si quieres que el navegador <strong>automáticamente recargue</strong> la página cuando modifques un archivo, lo puedes conseguir fácilmente con <a href="https://www.browsersync.io/"><strong>Browsersync</strong></a>. No es obligatorio, pero quizás te resulte más cómodo programar así.</p>
+<p>Puedes instalar Browsersync de manera global (para así utilizarlo desde cualquier directorio) vía npm con el flag <code>-g</code>:</p>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="ex">npm</span> install -g browser-sync</code></pre></div>
+<p>Una vez instalado, puedes lanzarlo en el directorio raíz de la práctica. El siguiente comando ejecuta browsersync, lanza un servidor local y activa la auto-recarga del navegador cuando haya algún cambio en los ficheros HTML, CSS o JavaScript:</p>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="ex">browser-sync</span> start --server --files=<span class="st">&quot;*.html,js/*.js,*.css&quot;</span></code></pre></div>
+<p>Para más información, consulta la <a href="https://www.browsersync.io/docs/command-line">documentación de Browsersync</a>.</p>
+</body>
+</html>

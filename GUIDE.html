@@ -1,0 +1,207 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title>Guía de la práctica</title>
+  <style type="text/css">code{white-space: pre;}</style>
+  <style type="text/css">
+div.sourceCode { overflow-x: auto; }
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code > span.dt { color: #902000; } /* DataType */
+code > span.dv { color: #40a070; } /* DecVal */
+code > span.bn { color: #40a070; } /* BaseN */
+code > span.fl { color: #40a070; } /* Float */
+code > span.ch { color: #4070a0; } /* Char */
+code > span.st { color: #4070a0; } /* String */
+code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code > span.ot { color: #007020; } /* Other */
+code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code > span.fu { color: #06287e; } /* Function */
+code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+code > span.cn { color: #880000; } /* Constant */
+code > span.sc { color: #4070a0; } /* SpecialChar */
+code > span.vs { color: #4070a0; } /* VerbatimString */
+code > span.ss { color: #bb6688; } /* SpecialString */
+code > span.im { } /* Import */
+code > span.va { color: #19177c; } /* Variable */
+code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code > span.op { color: #666666; } /* Operator */
+code > span.bu { } /* BuiltIn */
+code > span.ex { } /* Extension */
+code > span.pp { color: #bc7a00; } /* Preprocessor */
+code > span.at { color: #7d9029; } /* Attribute */
+code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+  </style>
+  <link rel="stylesheet" href="docs.css" type="text/css" />
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_CHTML-full" type="text/javascript"></script>
+</head>
+<body>
+<div id="header">
+<h1 class="title">Guía de la práctica</h1>
+</div>
+<p>Esta es una guía paso a paso con sugerencias para afrontar la práctica. Es recomendable <strong>leer este documento entero</strong> –especialmente el apartado de <em>Consideraciones</em>– antes de ponerse a realizar el primer paso.</p>
+<p>También es recomendable tener fresca en la cabeza la API de la práctica anterior. Repasa el enunciado de la práctica o su código fuente. Si te atascas sobre qué llamadas a la API hay que hacer, siempre puedes consultar el archivo <code>index.js</code> de la práctica anterior, donde se programa un cliente de batallas.</p>
+<h2 id="mostrar-los-personajes">1. Mostrar los personajes</h2>
+<p>En el código HTML de base, hay dos listas <code>&lt;ul class=&quot;character-list&quot;&gt;</code> que hay que rellenar con elementos <code>&lt;li&gt;</code>, uno por personaje. Debemos indicar el nombre del personaje junto con sus atributos de vida y maná. Más adelante nos será util poder referinos a ese personaje, así que es conveniente almacenar en un atributo data su ID de personaje.</p>
+<pre><code>&lt;ul class=&quot;character-list&quot;&gt;
+    &lt;!-- ... --&gt;
+    &lt;li data-chara-id=&quot;bat 2&quot;&gt;
+        bat (HP: &lt;strong&gt;5&lt;/strong&gt;/5, MP: &lt;strong&gt;0&lt;/strong&gt;/0)
+    &lt;/li&gt;
+&lt;/ul&gt;</code></pre>
+<p>Aunque las listas <code>&lt;ul&gt;</code> están creadas en el archivo HTML, falta rellenar su contenido, lo cual se ha de hacer dinámicamente con JavaScript. Con <code>Battle.prototype.characters.allFrom</code> se puede acceder a las vistas (<code>CharactersView</code>) de los personajes de una party.</p>
+<p>Como habrá que refrescar el contenido de estas listas, es recomendable implementar una función que haga esto, para poder llamarla más adelante desde otros sitios.</p>
+<p>Por ahora, se puede comenzar con mostrar los personajes al inicio de cada turno. Para ello, hay que subscribirse al evento <code>turn</code> de <code>Battle</code>.</p>
+<div class="figure">
+<img src="doc-images/parties.png" alt="Listado de las parties" />
+<p class="caption">Listado de las parties</p>
+</div>
+<h3 id="documentación-relacionada">Documentación relacionada</h3>
+<ul>
+<li><a href="https://developer.mozilla.org/en-US/docs/Web/API/Element/innerHTML"><code>Element.innerHTML</code></a> en la MDN.</li>
+<li><a href="https://developer.mozilla.org/en-US/docs/Web/API/Document/querySelector"><code>Document.querySelector</code></a> en la MDN</li>
+</ul>
+<h2 id="mostrar-el-personaje-seleccionado">2. Mostrar el personaje seleccionado</h2>
+<p>El CSS está preparado para que un elemento con la clase <code>active</code> aparezca resaltado, indicando que es el turno de dicho personaje.</p>
+<p>En el callback evento <code>turn</code> de <code>Battle</code> se nos pasa la información de cada turno. Uno de los datos del evento es la ID del personaje activo, con lo que podemos usar un <code>querySelector</code> para seleccionar el <code>&lt;li&gt;</code> de dicho personaje y añadir la clase <code>active</code>.</p>
+<div class="figure">
+<img src="doc-images/highlight_current_chara.png" alt="Selección del personaje actual" />
+<p class="caption">Selección del personaje actual</p>
+</div>
+<h3 id="documentación-relacionada-1">Documentación relacionada</h3>
+<ul>
+<li><a href="https://developer.mozilla.org/en/docs/Web/API/Element/classList"><code>Element.classList</code></a> en la MDN</li>
+<li><a href="https://developer.mozilla.org/en/docs/Web/Guide/HTML/Using_data_attributes">Using data attributes</a> (guía en la MDN)</li>
+</ul>
+<h2 id="mostrar-el-menú-de-acciones-de-batalla">3. Mostrar el menú de acciones de batalla</h2>
+<p>Dentro de la sección <code>&lt;section class=&quot;battle-menu&quot;&gt;</code> hay tres formularios, que aparecen ocultos gracias a un estilo <code>display: none</code> aplicado <em>inline</em>. Cada formulario representa una “fase” del menú de batalla, y presentará una lista de opciones al jugador.</p>
+<p>Se puede obtener una lista de las opciones disponibles en un momento dado con el método <code>list</code> de <code>Battle.prototype.options</code>. Con dicha lista, se pueden generar una serie de <em>radio buttons</em> para que el jugador pueda elegir la opción deseada.</p>
+<p>Esta lista de <em>radio buttons</em> tendrá el siguiente aspecto –pero se ha de generar dinámicamente con JavaScript:</p>
+<div class="sourceCode"><pre class="sourceCode html"><code class="sourceCode html"><span class="kw">&lt;ul</span><span class="ot"> class=</span><span class="st">&quot;choices&quot;</span><span class="kw">&gt;</span>
+    <span class="kw">&lt;li&gt;&lt;label&gt;&lt;input</span><span class="ot"> type=</span><span class="st">&quot;radio&quot;</span><span class="ot"> name=</span><span class="st">&quot;option&quot;</span><span class="ot"> value=</span><span class="st">&quot;attack&quot;</span><span class="kw">&gt;</span> attack<span class="kw">&lt;/label&gt;&lt;/li&gt;</span>
+    <span class="kw">&lt;li&gt;&lt;label&gt;&lt;input</span><span class="ot"> type=</span><span class="st">&quot;radio&quot;</span><span class="ot"> name=</span><span class="st">&quot;option&quot;</span><span class="ot"> value=</span><span class="st">&quot;defend&quot;</span><span class="kw">&gt;</span> defend<span class="kw">&lt;/label&gt;&lt;/li&gt;</span>
+    <span class="kw">&lt;li&gt;&lt;label&gt;&lt;input</span><span class="ot"> type=</span><span class="st">&quot;radio&quot;</span><span class="ot"> name=</span><span class="st">&quot;option&quot;</span><span class="ot"> value=</span><span class="st">&quot;cast&quot;</span><span class="kw">&gt;</span> cast<span class="kw">&lt;/label&gt;&lt;/li&gt;</span>
+<span class="kw">&lt;/ul&gt;</span></code></pre></div>
+<p>Hemos de generar esta lista dinámicamente dentro de las acciones a tomar cuando se dispare el evento <code>turn</code> de <code>Battle</code>. En este caso, la lista a generar es de <strong>las acciones</strong> que puede tomar un personaje, lo que se corresponde con el formulario con su atributo <code>name</code> a <code>select-action</code>.</p>
+<div class="figure">
+<img src="doc-images/actions_menu.png" alt="Menú de acciones" />
+<p class="caption">Menú de acciones</p>
+</div>
+<h2 id="seleccionar-una-acción">4. Seleccionar una acción</h2>
+<p>Los <em>radio buttons</em> tienen un funcionamiento peculiar, puesto que comparten el atributo <code>name</code>. Esta es la manera que tiene el navegador de “agruparlos”, de forma que sólo pueda estar activo un único <em>radio button</em> en un momento dado.</p>
+<p>Se puede acceder fácilmente al valor (<em>value</em>) de un <strong>grupo de <em>radio buttons</em></strong> a través del formulario al que pertenecen. Por ejemplo, para el menú de batalla hemos establecido un <code>name</code> para el grupo de <code>&quot;option&quot;</code>. Suponiendo que su formulario está almacenado en la variable <code>form</code>, podríamos tener:</p>
+<div class="sourceCode"><pre class="sourceCode javascript"><code class="sourceCode javascript"><span class="kw">var</span> action <span class="op">=</span> <span class="va">form</span>.<span class="at">elements</span>[<span class="st">&#39;option&#39;</span>].<span class="at">value</span><span class="op">;</span>
+<span class="va">battle</span>.<span class="va">options</span>.<span class="at">select</span>(action)<span class="op">;</span></code></pre></div>
+<p>Obviamente hay que realizar esto cuando el jugador haya pulsado el botón de <em>Select action</em>. Para ello, hay que subscribirse al evento <code>submit</code> del formulario. Es imprescindible que además anulemos dicho evento con <code>preventDefault</code> para evitar que el navegador recargue la página.</p>
+<p>Debemos además <strong>validar</strong> el formulario, para asegurarnos de que el jugador <em>ha seleccionado</em> una opción. HTML5 nos permite hacer validaciones sencillas con JavaScript en el lado del cliente. Para requerir un campo, debemos añadir el atributo <code>required</code> a dicho elemento. En el caso de un grupo de <em>radio buttons</em>, basta con añadir <code>required</code> a uno cualquiera:</p>
+<div class="sourceCode"><pre class="sourceCode html"><code class="sourceCode html"><span class="kw">&lt;input</span><span class="ot"> type=</span><span class="st">&quot;radio&quot;</span><span class="ot"> name=</span><span class="st">&quot;option&quot;</span><span class="ot"> value=</span><span class="st">&quot;attack&quot;</span><span class="ot"> required</span><span class="kw">&gt;</span></code></pre></div>
+<p>Para comprobar que este paso está hecho correctamente, puedes subscribirte al evento <code>info</code> de <code>Battle</code> e imprimir los datos de dicho evento. Con lo que hay hecho ahora debería funcionar la acción de <em>Defend</em>, puesto que no requiere ningún paso más.</p>
+<div class="figure">
+<img src="doc-images/defend_info.png" alt="Log de la acción de defender" />
+<p class="caption">Log de la acción de defender</p>
+</div>
+<h3 id="documentación-relacionada-2">Documentación relacionada</h3>
+<ul>
+<li><a href="https://developer.mozilla.org/en-US/docs/Web/Guide/HTML/Forms">HTML Forms Guide</a>, una lista de artículos y tutoriales sobre formularios HTML5.</li>
+<li><a href="https://developer.mozilla.org/en/docs/Web/API/Event/preventDefault"><code>Event.preventDefault</code></a> en la MDN</li>
+<li><a href="https://developer.mozilla.org/en-US/docs/Web/API/HTMLFormControlsCollection"><code>HTMLFormControlsCollection</code></a> en la MDN (para información sobre <code>HTMLFormElement.elements</code>)</li>
+</ul>
+<h2 id="seleccionar-un-objetivo">5. Seleccionar un objetivo</h2>
+<p>Se hace de forma similar a seleccionar una acción: se ha de generar la lista de opciones dinámicamente con JavaScript, así como interceptar el evento <code>submit</code> de este formulario y llamar a <code>battle.options.select</code> con el objetivo seleccionado por el jugador.</p>
+<p>Un añadido que tiene este formulario es un enlace que nos permite <strong>cancelar la acción actual</strong>. Para que funcione, hemos de interceptar el evento <code>click</code> de dicho enlace, usar <code>preventDefault</code> para que el navegador no haga nada, y llamar a <code>battle.options.cancel</code>.</p>
+<p>Por supuesto, hay que controlar qué menú está visible cada momento. Esto lo podemos hacer cambiando su estilo CSS inline, a través de la propiedad <code>display</code>:</p>
+<div class="sourceCode"><pre class="sourceCode javascript"><code class="sourceCode javascript"><span class="va">actionForm</span>.<span class="va">style</span>.<span class="at">display</span> <span class="op">=</span> <span class="st">&#39;none&#39;</span><span class="op">;</span> <span class="co">// oculta el formulario de acciones</span></code></pre></div>
+<div class="sourceCode"><pre class="sourceCode javascript"><code class="sourceCode javascript"><span class="va">targetForm</span>.<span class="va">style</span>.<span class="at">display</span> <span class="op">=</span> <span class="st">&#39;block&#39;</span><span class="op">;</span> <span class="co">// muestra el formulario de objetivos</span></code></pre></div>
+<p>Para comprobar que funciona, prueba a elegir atacar un objetivo en los menús y comprueba el mensaje que emite el evento <code>info</code> de <code>Battle</code> en la consola:</p>
+<div class="figure">
+<img src="doc-images/attack_info.png" alt="Log de atacar" />
+<p class="caption">Log de atacar</p>
+</div>
+<p>Como re-renderizamos los personajes de las <em>parties</em> en cada turno (cada vez que <code>Battle</code> emite <code>turn</code>), si el ataque ha tenido éxito, deberíamos ver cómo han disminuido sus puntos de vida.</p>
+<h3 id="documentación-relacionada-3">Documentación relacionada</h3>
+<ul>
+<li><a href="https://developer.mozilla.org/en-US/docs/Web/CSS/display">Propiedad CSS <code>display</code></a> en la MDN</li>
+</ul>
+<h2 id="seleccionar-un-hechizo">6. Seleccionar un hechizo</h2>
+<p>Esto es muy similar a seleccionar una acción o un objetivo. Hay que generar, de nuevo, la lista de opciones (en este caso, hechizos disponibles) dinámicamente, y ocultar / enseñar el menú que corresponda según el flujo.</p>
+<p>Seleccionar un hechizo ocurre tras haber seleccionado la opción <em>Cast</em> en el menú de acciones, y una vez seleccinado el hechizo debemos mostrar el formulario de seleccionar un objetivo.</p>
+<p>La particularidad de este menú es que <strong>puede ser que no haya ninguna opción disponible</strong>. En este caso, debemos desactivar el botón del formulario si la lista de opciones está vacía (y activarlo en caso contrario). Para ello, hay que usar la propiedad <code>disabled</code> del botón.</p>
+<div class="figure">
+<img src="doc-images/disabled_spells.png" alt="Botón desactivado" />
+<p class="caption">Botón desactivado</p>
+</div>
+<h2 id="panel-de-información">7. Panel de información</h2>
+<p>Hay que mostrar información al usuario sobre el resultado de una acción concreta: si el ataque tuvo éxito o no, cuanto daño causó, etc.</p>
+<div class="figure">
+<img src="doc-images/info_panel.png" alt="Panel de información de batalla" />
+<p class="caption">Panel de información de batalla</p>
+</div>
+<p>En el archivo HTML hay un párrafo con ID <code>battle-info</code>, cuyo contenido puedes modificar para mostrar estos mensajes de información de batalla.</p>
+<p>Esta información de batalla la podemos obtener subscribiéndonos al evento <code>info</code> de <code>Battle</code>, que nos proporcionará los datos de qué personaje actuó, contra quién, si tuvo éxito, etc.</p>
+<p>Para facilitar la tarea, se ha incluido una función llamada <code>prettifyEffect</code>, que devuelve una string “bonita” (en lugar de <code>[Object object]</code>) con los efectos aplicados en el ataque.</p>
+<div class="sourceCode"><pre class="sourceCode javascript"><code class="sourceCode javascript"><span class="kw">var</span> effectsTxt <span class="op">=</span> <span class="at">prettifyEffect</span>(effect <span class="op">||</span> <span class="op">{}</span>)<span class="op">;</span>
+<span class="co">// ej: -&gt; &#39;-5 hp, +5 mp&#39;</span></code></pre></div>
+<h2 id="marcar-personajes-como-muertos">8. Marcar personajes como muertos</h2>
+<p>Ahora que los personajes pueden atacar, podemos mostrar cuándo uno ha muerto. La hoja de estilos CSS incluye una clase <code>dead</code> que, aplicada a un elemento, lo muestra como “muerto” (en este caso, tachado).</p>
+<div class="figure">
+<img src="doc-images/death.png" alt="Personaje marcado como muerto" />
+<p class="caption">Personaje marcado como muerto</p>
+</div>
+<p>Para ello, se ha de modificar el código que se ha programado en el paso 1 para mostrar los personajes, de forma que cada elemento de la lista (<code>&lt;li&gt;</code>) tenga la clase <code>dead</code> si el personaje está muerto (los puntos de vida están a cero).</p>
+<h2 id="final-del-juego">9. Final del juego</h2>
+<p>Hay que mostrar un mensaje en el panel de información que indique que el juego ha acabado y quién ha ganado. Además, hay que volver a mostrar los personajes para que se muestre el resultado final de la batalla (con una de las <em>parties</em> con todos los personajes muertos).</p>
+<p>El juego se acaba cuando <code>Battle</code> emite el evento <code>end</code>, por lo que debemos implementar dicho código en un callback de este evento.</p>
+<div class="figure">
+<img src="doc-images/end_game.png" alt="Mensaje de final del juego" />
+<p class="caption">Mensaje de final del juego</p>
+</div>
+<hr />
+<h2 id="consideraciones">Consideraciones</h2>
+<h3 id="template-strings">Template strings</h3>
+<p>Las <em>template strings</em> (o <em>template literals</em>) son una característica de ES6, pero que <a href="http://kangax.github.io/compat-table/es6/">ya está implementada</a> en la mayoría de navegadores modernos. Pueden resultarte útiles en esta práctica, ya que soportan <strong>interpolación de expresiones</strong> y declaraciones <strong>multilinea</strong>.</p>
+<p>En su manera más básica, se definen igual que una string normal, pero usando backticks <code>`</code>:</p>
+<div class="sourceCode"><pre class="sourceCode javascript"><code class="sourceCode javascript"><span class="vs">`Hello, world!`</span></code></pre></div>
+<p>Se pueden tener strings multilíneas sin necesidad de romper la cadena ni usar el operador de concatenación:</p>
+<div class="sourceCode"><pre class="sourceCode javascript"><code class="sourceCode javascript"><span class="vs">`Hello,</span>
+<span class="vs">world!`</span></code></pre></div>
+<p>Para interpolar expresiones, debemos poner la expresión a interpolar entre los caracteres <code>${}</code>:</p>
+<div class="sourceCode"><pre class="sourceCode javascript"><code class="sourceCode javascript"><span class="kw">var</span> name <span class="op">=</span> <span class="st">&#39;Darth Vader&#39;</span><span class="op">;</span>
+<span class="vs">`Hello, </span><span class="sc">${</span>name<span class="sc">}</span><span class="vs">`</span><span class="op">;</span></code></pre></div>
+<p>No sólo podemos utilizar variables, sino otro tipo de expresiones:</p>
+<div class="sourceCode"><pre class="sourceCode javascript"><code class="sourceCode javascript"><span class="vs">`Hello, </span><span class="sc">${</span><span class="va">name</span>.<span class="at">toUpperCase</span>()<span class="sc">}</span><span class="vs">, here&#39;s a calculation: </span><span class="sc">${</span><span class="dv">2</span> <span class="op">+</span> <span class="dv">2</span><span class="sc">}</span><span class="vs">`</span></code></pre></div>
+<p>Recordemos también que el operador ternario es también una expresión, y nos permite interpolar condiciones sencillas:</p>
+<div class="sourceCode"><pre class="sourceCode javascript"><code class="sourceCode javascript"><span class="vs">`Hello, you are </span><span class="sc">${</span>life <span class="op">&gt;</span> <span class="dv">0</span> <span class="op">?</span> <span class="st">&#39;alive&#39;</span> : <span class="st">&#39;dead&#39;</span><span class="sc">}</span><span class="vs">`</span><span class="op">;</span></code></pre></div>
+<p>Un ejemplo práctico que muestra la diferencia entre usar template strings y strings normales para generar código HTML a usar dentro de la propiedad <code>innerHTML</code>:</p>
+<div class="sourceCode"><pre class="sourceCode javascript"><code class="sourceCode javascript"><span class="kw">var</span> list <span class="op">=</span> <span class="va">document</span>.<span class="at">querySelector</span>(<span class="st">&#39;ul.shopping-list&#39;</span>)<span class="op">;</span>
+<span class="kw">var</span> data <span class="op">=</span> <span class="op">{</span><span class="dt">name</span><span class="op">:</span> <span class="st">&#39;Banana&#39;</span><span class="op">,</span> <span class="dt">amount</span><span class="op">:</span> <span class="dv">3</span><span class="op">,</span> <span class="dt">price</span><span class="op">:</span> <span class="fl">0.5</span><span class="op">};</span>
+
+<span class="co">// template strings</span>
+<span class="va">list</span>.<span class="at">innerHTML</span> <span class="op">+=</span> <span class="vs">`&lt;li class=&quot;</span><span class="sc">${</span><span class="va">data</span>.<span class="at">amount</span> <span class="op">&gt;</span> <span class="dv">0</span> <span class="op">?</span> <span class="st">&#39;bought&#39;</span> : <span class="st">&#39;&#39;</span><span class="sc">}</span><span class="vs">&quot;&gt;</span>
+<span class="vs">    </span><span class="sc">${</span><span class="va">data</span>.<span class="at">name</span><span class="sc">}</span><span class="vs">, </span><span class="sc">${</span><span class="va">data</span>.<span class="at">amount</span> <span class="op">*</span> <span class="va">data</span>.<span class="at">price</span><span class="sc">}</span><span class="vs">€</span>
+<span class="vs">    &lt;/li&gt;`</span><span class="op">;</span>
+
+<span class="co">// regular strings</span>
+<span class="va">list</span>.<span class="at">innerHTML</span> <span class="op">+=</span> <span class="st">&#39;&lt;li class=&quot;&#39;</span> <span class="op">+</span> (<span class="va">data</span>.<span class="at">amount</span> <span class="op">&gt;</span> <span class="dv">0</span> <span class="op">?</span> <span class="st">&#39;bought&#39;</span> : <span class="st">&#39;&#39;</span>) <span class="op">+</span> <span class="st">&#39;&quot;&gt;&#39;</span> <span class="op">+</span>
+    <span class="va">data</span>.<span class="at">name</span> <span class="op">+</span> <span class="st">&#39;, &#39;</span> <span class="op">+</span> <span class="va">data</span>.<span class="at">amount</span> <span class="op">*</span> <span class="va">data</span>.<span class="at">price</span> <span class="op">+</span> <span class="st">&#39;€&#39;</span> <span class="op">+</span>
+    <span class="st">&#39;&lt;/li&gt;&#39;</span><span class="op">;</span></code></pre></div>
+<p><strong>Documentación</strong>: <a href="https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Template_literals"><em>Template strings</em></a> en la MDN.</p>
+<h3 id="atributos-data">Atributos data</h3>
+<p>Las ID’s de los personajes repetidos tienen un espacio en blanco (p.ej: <code>bat 2</code>). Para poder usar esto en un <code>querySelector</code>, se deben utilizar comillas:</p>
+<div class="sourceCode"><pre class="sourceCode javascript"><code class="sourceCode javascript"><span class="va">document</span>.<span class="at">querySelector</span>(<span class="st">&#39;[data-chara-id=&quot;bat 2&quot;]&#39;</span>)<span class="op">;</span></code></pre></div>
+<p>Para acceder a ese atributo data usando la propiedad <code>dataset</code> hay que tener en cuenta que los guiones se transforman en <a href="https://en.wikipedia.org/wiki/Camel_case#Computer_programming">camel case</a>. Así, si se usa como atributo data <code>data-chara-id</code>, se accedería a él de la siguiente manera:</p>
+<div class="sourceCode"><pre class="sourceCode javascript"><code class="sourceCode javascript"><span class="kw">var</span> el <span class="op">=</span> <span class="va">document</span>.<span class="at">querySelector</span>([data<span class="op">-</span>chara<span class="op">-</span>id<span class="op">=</span><span class="st">&quot;bat 2&quot;</span>])<span class="op">;</span>
+<span class="va">console</span>.<span class="at">log</span>(<span class="va">el</span>.<span class="va">dataset</span>.<span class="at">charaId</span>)<span class="op">;</span> <span class="co">// imprimiría bat 2</span></code></pre></div>
+<p><strong>Documentación</strong>: <a href="https://developer.mozilla.org/en/docs/Web/Guide/HTML/Using_data_attributes">Using data attributes</a> en la MDN.</p>
+</body>
+</html>
