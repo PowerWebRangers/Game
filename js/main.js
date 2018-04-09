@@ -508,7 +508,8 @@ OptionsStack.prototype.cancel = function () {
 OptionsStack.prototype.clear = function () {
   this._stack = [];
 };
-//--------------------------------- OPTIONS --------------------------------------------
+
+//--------------------------------- OPTIONS  && OPTIONS STACK --------------------------------------------
 
 //------------------------------- ITEMS ------------------------------------------------
 
@@ -536,10 +537,12 @@ function Scroll(name, cost, effect, uses) {
 Scroll.prototype = Object.create(Item.prototype);
 Scroll.prototype.constructor = Scroll;
 
+//Puede ser usado si tienes mapa y suficientes usos
 Scroll.prototype.canBeUsed = function (mp) {
   return (this.cost <= mp && this.uses > 0);
 };
 
+//new Effect({ hp: 25 })
 function Effect(variations) {
   Object.keys(variations).forEach(function (feature) {
     this[feature] = variations[feature];
@@ -550,6 +553,7 @@ function Effect(variations) {
 
 //------------------------ LIST TO MAP && MAP VALUES && D100 -----------------------------------
 
+//Convierte una lista en un mapa
 function listToMap(list, getIndex) {
     return list.reduce(function (map, item) {
       map[getIndex(item)] = item;
@@ -557,20 +561,23 @@ function listToMap(list, getIndex) {
     }, {});
 }
 
+//Convierte un mapa en una lista
 function mapValues (map) {
     return Object.keys(map).map(function (key) {
       return map[key];
     });
 }
 
+//Devuelve un númer aleatorio entre 0 y 100
 function d100 (){
   return Math.floor(Math.random() * 100) + 1;
 }
 
-//------------------------ LIST TO MAP && MAP VALUES -----------------------------------
+//------------------------ LIST TO MAP && MAP VALUES && D100 -----------------------------------
 
 //------------------------------------ CHARACTERS --------------------------------------
 
+//Inicialización de atributos del personaje (Se le llama desde LIB)
 function Character(name, features) {
   features = features || {};
   this.name = name;
@@ -584,6 +591,7 @@ function Character(name, features) {
   this.maxHp = features.maxHp || this.hp || 15;
 }
 
+//Atributos que no pueden cambiar
 Character.prototype._immuneToEffect = ['name', 'weapon'];
 
 Character.prototype.isDead = function () {
@@ -760,6 +768,7 @@ Battle.prototype._nextTurn = function () {
 
 Battle.prototype._checkEndOfBattle = function () {
   var allCharacters = mapValues(this._charactersById);
+
   var aliveCharacters = allCharacters.filter(isAlive);
   var commonParty = getCommonParty(aliveCharacters);
   return commonParty ? { winner: commonParty } : null;
@@ -1000,6 +1009,7 @@ var battle = new Battle();
 var actionForm, spellForm, targetForm;
 var infoPanel;
 
+//Para aumento/disminución de atributos: + si cura - si daña
 function prettifyEffect(obj) {
     return Object.keys(obj).map(function (key) {
         var sign = obj[key] > 0 ? '+' : ''; // show + sign for positive effects
@@ -1007,23 +1017,7 @@ function prettifyEffect(obj) {
     }).join(', ');
 }
 
-battle.setup({
-    heroes: {
-        
-        members: insertaHeroesAleatorios(),
 
-        grimoire: [
-            lib.scrolls.health,
-            lib.scrolls.fireball
-        ]
-    },
-    monsters: {
-      
-        members: insertaMonstruosAleatorios(),
-
-    }
-
-});
 
 function insertaHeroesAleatorios()
 {
@@ -1069,10 +1063,33 @@ function insertaMonstruosAleatorios()
     return members;
 }
 
+//Devuelve número Random entre un rango
 function getRandomArbitrary(min, max) 
 {
     return Math.random() * (max - min) + min;
 }
+
+
+battle.setup({
+    heroes: {
+        
+        members: insertaHeroesAleatorios(),
+
+        grimoire: [
+            lib.scrolls.health,
+            lib.scrolls.fireball
+        ]
+    },
+    monsters: {
+      
+        members: insertaMonstruosAleatorios(),
+        grimoire: [
+            lib.scrolls.health,
+            lib.scrolls.fireball
+        ]
+    }
+
+});
 
 function insertar (list,listHTML,idPersonaje)
     {
@@ -1117,9 +1134,8 @@ function render ()
 
     var listHeroesHTML = document.getElementById('heroes'); //Creamos una lista que viene definida en el HTML
     var listMonstruosHTML  = document.getElementById('monsters');
-    var personaje;//Variable que contiene el personaje actual segun la lista de personajes
-    var form = [];
 
+    var form = [];
 
     insertar(listHeroes,listHeroesHTML, idHeroes);
     insertar(listMonstruos,listMonstruosHTML,idMonstruos);
@@ -1224,7 +1240,6 @@ battle.on('turn', function (data) {
     else
          button.disabled = false;
 
-    console.log(this);
 
     //6. SELECCIONAR UN HECHIZO///
 });
