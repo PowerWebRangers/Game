@@ -319,7 +319,7 @@ CharactersView.prototype._visibleFeatures = [
   'name',
   'party',
   'initiative',
-  'defense',
+  'evasion',
   'hp',
   'mp',
   'maxHp',
@@ -583,7 +583,7 @@ function Character(name, features) {
   this.name = name;
   this.party = null;
   this.initiative = features.initiative || 0;
-  this.defense = features.defense || 0;
+  this.evasion = features.evasion || 0;
   this.weapon = features.weapon || null;
   this._mp = features.mp || 0;
   this._hp = features.hp || 0;
@@ -599,7 +599,7 @@ Character.prototype.isDead = function () {
 };
 
 Character.prototype.applyEffect = function (effect, isAlly) {
-  if (isAlly || d100() > this.defense) {
+  if (isAlly || d100() > this.evasion) {
     Object.keys(effect).forEach(function (affectedFeature) {
       var isImmune = this._immuneToEffect.indexOf(affectedFeature) > -1;
       if (!isImmune) {
@@ -637,6 +637,15 @@ Object.defineProperty(Character.prototype, 'defense', {
     this._defense = Math.max(0, Math.min(newValue, 100));
   }
 });
+
+Object.defineProperty(Character.prototype, 'evasion', {
+  get: function () {
+    return this._evasion;
+  },
+  set: function (newValue) {
+    this._evasion = Math.max(0, Math.min(newValue, 100));
+  }
+});
 //------------------------------------ CHARACTERS --------------------------------------
 
 
@@ -644,10 +653,14 @@ Object.defineProperty(Character.prototype, 'defense', {
 
 function Battle() {
   EventEmitter.call(this);
+
+  //Lista de Hechizos por party
   this._grimoires = {};
+
   this._charactersById = {};
   this._turns = new TurnList();
 
+  
   this.options = new OptionsStack();
   this.characters = new CharactersView();
 }
@@ -803,30 +816,30 @@ Battle.prototype._onAction = function (action) {
 
 Battle.prototype._defend = function () {
   var activeCharacterId = this._action.activeCharacterId;
-  var newDefense = this._improveDefense(activeCharacterId);
+  var newEvasion = this._improveEvasion(activeCharacterId);
   this._action.targetId = this._action.activeCharacterId;
-  this._action.newDefense = newDefense;
+  this._action.newEvasion = newEvasion;
   this._executeAction();
 };
 
-Battle.prototype._improveDefense = function (targetId) {
+Battle.prototype._improveEvasion = function (targetId) {
   var states = this._states[targetId];
   var targetCharacter = this._charactersById[targetId];
-  if (!states.improvedDefense) {
-    states.improvedDefense = {
-      originalDefense: targetCharacter.defense
+  if (!states.improvedEvasion) {
+    states.improvedEvasion = {
+      originalEvasion: targetCharacter.evasion
     };
   }
-  targetCharacter.defense = Math.ceil(targetCharacter.defense * 1.1);
-  return targetCharacter.defense;
+  targetCharacter.evasion = Math.ceil(targetCharacter.evasion * 1.1);
+  return targetCharacter.evasion;
 };
 
-Battle.prototype._restoreDefense = function (targetId) {
+Battle.prototype._restoreEvasion = function (targetId) {
   var states = this._states[targetId];
-  if (states.improvedDefense) {
-    this._charactersById[targetId].defense =
-      states.improvedDefense.originalDefense;
-    delete states.improvedDefense;
+  if (states.improvedEvasion) {
+    this._charactersById[targetId].evasion =
+      states.improvedEvasion.originalEvasion;
+    delete states.improvedEvasion;
   }
 };
 
@@ -837,7 +850,7 @@ Battle.prototype._attack = function () {
     self._action.effect = new Effect(activeCharacter.weapon.effect);
     self._action.targetId = targetId;
     self._executeAction();
-    self._restoreDefense(targetId);
+    self._restoreEvasion(targetId);
   });
 };
 
@@ -851,7 +864,7 @@ Battle.prototype._cast = function () {
       self._action.scrollName = scroll.name;
       activeCharacter.mp -= scroll.cost;
       self._executeAction();
-      self._restoreDefense(targetId);
+      self._restoreEvasion(targetId);
     });
   });
 };
@@ -941,7 +954,7 @@ weapons: {
       return new Character('Tank', {
         initiative: 10,
         weapon: lib.weapons.sword,
-        defense: 70,
+        evasion: 70,
         hp: 80,
         mp: 30
       });
@@ -950,7 +963,7 @@ weapons: {
     get heroWizard() {
       return new Character('Wizz', {
         initiative: 4,
-        defense: 50,
+        evasion: 50,
         weapon: lib.weapons.wand,
         hp: 40,
         mp: 100
@@ -960,7 +973,7 @@ weapons: {
     get monsterSkeleton() {
       return new Character('skeleton', {
         initiative: 9,
-        defense: 50,
+        evasion: 50,
         weapon: lib.weapons.sword,
         hp: 100,
         mp: 0
@@ -970,7 +983,7 @@ weapons: {
     get monsterSlime() {
       return new Character('slime', {
         initiative: 2,
-        defense: 40,
+        evasion: 40,
         weapon: lib.weapons.pseudopode,
         hp: 40,
         mp: 50
@@ -980,7 +993,7 @@ weapons: {
     get monsterBat() {
       return new Character('bat', {
         initiative: 30,
-        defense: 80,
+        evasion: 80,
         weapon: lib.weapons.fangs,
         hp: 5,
         mp: 0
@@ -1058,7 +1071,7 @@ function insertaMonstruosAleatorios()
 */
     members = [];
 
-   members.push(lib.characters.monsterBat);
+   members.push(lib.characters.heroWizard);
 
     return members;
 }
@@ -1084,8 +1097,7 @@ battle.setup({
       
         members: insertaMonstruosAleatorios(),
         grimoire: [
-            lib.scrolls.health,
-            lib.scrolls.fireball
+            lib.scrolls.health
         ]
     }
 
@@ -1174,9 +1186,6 @@ battle.on('turn', function (data) {
 
     actionForm.style.display = 'inline';//Modificamos el estilo del boton para que se vea por pantalla
     var opciones = this.options.list();//Array con las opciones
-    //Si le toca atacar a un enemigo, desactivamos la opción de lanzar un hechizo
-    if (data.party === 'monsters')
-        opciones.pop();
 
     var seleccion = actionForm.querySelector('[class=choices]');//Lugar donde deben ir las opciones(dentro de choices)
     seleccion.innerHTML = "";
@@ -1221,6 +1230,7 @@ battle.on('turn', function (data) {
 
     var pjActivo = this._charactersById[data.activeCharacterId];
 
+    //Insertamos en el formulario todos los hechizos que pueda lanzar el personaje
     for(var hechizo in hechizos)
     {
         if (pjActivo.mp >= hechizos[hechizo].cost)
@@ -1233,12 +1243,15 @@ battle.on('turn', function (data) {
         }
     }
     
+    //Desactivamos el botón de lanzar hechizo si el personaje no tiene ningun hechizo
     var button = spellForm.querySelector('[type=submit]');
 
      if(spellForm.elements.length === 1)
          button.disabled = true;
     else
          button.disabled = false;
+
+    console.log(this);
 
 
     //6. SELECCIONAR UN HECHIZO///
@@ -1264,7 +1277,7 @@ battle.on('info', function (data) {
             break;
         case "defend":
                 infoPanel.innerHTML='<strong>' + data.activeCharacterId + '</strong>' + " " + data.action 
-                + "ed and his new defense is " + data.newDefense; 
+                + "ed and his new evasion is " + data.newEvasion; 
                 break;
         case "cast":
             if(data.success){
