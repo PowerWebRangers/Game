@@ -1,3 +1,21 @@
+
+//--------------------------------------------------------------//
+//                                                              //
+//            EVENT EMITTER NO TOCAR                            //
+//                     CLOSE please                             //
+//--------------------------------------------------------------//
+/*
+Permite suscribir a las clases a eventos. 
+Por ejemplo: Battle, hereda de EventEmitter y puedes generar eventos:
+  this.emit('start', this._getCharIdsByParty());
+
+Y este evento lo implementas asi:
+battle.on('start', function (data) {
+    console.log('START', data);
+});
+SOLO PUEDE HABER 10 EVENTOS
+*/
+
 //Event Emitter
 
 function EventEmitter() {
@@ -284,6 +302,15 @@ function isUndefined(arg) {
 
 //------------------------------------- CHARACTERS VIEW --------------------------------
 
+/*
+  CHARACTERS VIEW
+  ---------------
+
+  Lista de los atributos de los personajes
+
+
+
+*/
 function CharactersView() {
   this._views = {};
 }
@@ -299,6 +326,7 @@ CharactersView.prototype._visibleFeatures = [
   'maxMp'
 ];
 
+//Devuelve todos los personajes
 CharactersView.prototype.all = function () {
   return Object.keys(this._views).reduce(function (copy, id) {
     copy[id] = this._views[id];
@@ -306,6 +334,7 @@ CharactersView.prototype.all = function () {
   }.bind(this), {});
 };
 
+//Devuelve todos los personajes pertenecientes a una party
 CharactersView.prototype.allFrom = function (party) {
   return Object.keys(this._views).reduce(function (copy, id) {
     if (this._views[id].party === party) {
@@ -315,9 +344,11 @@ CharactersView.prototype.allFrom = function (party) {
   }.bind(this), {});
 };
 
+//Devuelve un personaje pasando un ID
 CharactersView.prototype.get = function (id) {
   return this._views[id] || null;
 };
+
 
 CharactersView.prototype.set = function (characters) {
   this._views = Object.keys(characters).reduce(function (views, id) {
@@ -345,33 +376,49 @@ CharactersView.prototype._getViewFor = function (character) {
 
 //-------------------------- TURN LIST -------------------------------------------------
 
+//MANAGER DE TURNOS
 function TurnList() {}
 
 TurnList.prototype.reset = function (charactersById) {
+  //Lista de Characters
   this._charactersById = charactersById;
 
-  this._turnIndex = -1;
-  this.turnNumber = 0;
+  this._turnIndex = -1;//Indice del jugador que le toca atacar
+  this.turnNumber = -1;//Indice dentro del turno (Turno es que ataquen los dos)
+
+  //ID del Character activo
   this.activeCharacterId = null;
+
+  //Una lista con los Characters ordenados por iniciativa.
   this.list = this._sortByInitiative();
 };
 
 TurnList.prototype.next = function () {
   this.turnNumber++;
-  do {
-    this._turnIndex++;
-    this._turnIndex = this._turnIndex % this.list.length;
-    this.activeCharacterId = this.list[this._turnIndex];
-    var activeCharacter = this._charactersById[this.activeCharacterId];
-  } while (activeCharacter.isDead());
 
+  //Al inicio del turno, reordenamos la lista por iniciativa (Puede cambiar)
+  if (this.turnNumber === 2)
+  {
+    this.turnNumber = 0;
+    this.list = this._sortByInitiative();
+  }
+
+  //Rota al siguiente jugador
+  this._turnIndex++;
+  this._turnIndex = this._turnIndex % this.list.length;
+  this.activeCharacterId = this.list[this._turnIndex];
+
+  //Party actual
+  var activeParty = this._charactersById[this.activeCharacterId].party;
+  
+  //Devuelve un Objeto con la party Actual y el ID del Jugador actual
   return {
-    number: this.turnNumber,
-    party: activeCharacter.party,
+    party: activeParty,
     activeCharacterId: this.activeCharacterId
   };
 };
 
+//Devuelve la lista de personajes ordenados por velocidad
 TurnList.prototype._sortByInitiative = function () {
   var charactersById = this._charactersById;
   return Object.keys(charactersById).sort(byDecreasingInitiative);
@@ -390,13 +437,24 @@ TurnList.prototype._sortByInitiative = function () {
 
 //OPTIONS
 
+//Event Emitter
+//lista de opciones : Attack, Defend, Cast
+//lista de opciones de hechizos : FireBall, Health
+//lista de opciones de Target: Bat, Wizard
 function Options(group) {
   EventEmitter.call(this);
-  this._group = typeof group === 'object' ? group : {};
+
+  //En this._group guarda group si es un objeto
+  this._group = {};
+
+  if (typeof group === 'object')
+    this._group = group;
 }
+
 Options.prototype = Object.create(EventEmitter.prototype);
 Options.prototype.constructor = Options;
 
+//Lista las opciones de Acciones: Attack, Defend, Cast
 Options.prototype.list = function () {
   return Object.keys(this._group);
 };
@@ -415,7 +473,7 @@ Options.prototype.select = function (id) {
 };
 
 //OPTIONS STACK
-
+//Tiene una pila con todas las acciones que se han hecho en el juego
 function OptionsStack() {
   this._stack = [];
   Object.defineProperty(this, 'current', {
@@ -454,11 +512,13 @@ OptionsStack.prototype.clear = function () {
 
 //------------------------------- ITEMS ------------------------------------------------
 
+//Clase base de los objetos
 function Item(name, effect) {
   this.name = name;
   this.effect = effect;
 }
 
+//Armas (ELIMINAR)
 function Weapon(name, damage, extraEffect) {
   extraEffect = extraEffect || new Effect({});
   extraEffect.hp = -damage;
@@ -467,15 +527,17 @@ function Weapon(name, damage, extraEffect) {
 Weapon.prototype = Object.create(Item.prototype);
 Weapon.prototype.constructor = Weapon;
 
-function Scroll(name, cost, effect) {
+//Hechizos
+function Scroll(name, cost, effect, uses) {
   Item.call(this, name, effect);
   this.cost = cost;
+  this.uses = uses;//Número de usos del hechizo
 }
 Scroll.prototype = Object.create(Item.prototype);
 Scroll.prototype.constructor = Scroll;
 
 Scroll.prototype.canBeUsed = function (mp) {
-  return this.cost <= mp;
+  return (this.cost <= mp && this.uses > 0);
 };
 
 function Effect(variations) {
@@ -920,11 +982,11 @@ weapons: {
   scrolls: {
 
     get health() {
-      return new Scroll('health', 10, new Effect({ hp: 25 }));
+      return new Scroll('health', 10, new Effect({ hp: 25 }),5);
     },
 
     get fireball() {
-      return new Scroll('fireball', 30, new Effect({ hp: -25 }));
+      return new Scroll('fireball', 30, new Effect({ initiative: 35 }),1);
     }
 
   }
@@ -965,7 +1027,7 @@ battle.setup({
 
 function insertaHeroesAleatorios()
 {
-
+/*
     var numTank = getRandomArbitrary(0,2);
     var numWizz = getRandomArbitrary(0,2);
 
@@ -974,6 +1036,9 @@ function insertaHeroesAleatorios()
         members.push(lib.characters.heroTank);
 
     for(var i = 0; i < numWizz; i++)
+      */
+        members = [];
+
         members.push(lib.characters.heroWizard);
 
     return members;
@@ -982,6 +1047,7 @@ function insertaHeroesAleatorios()
 function insertaMonstruosAleatorios()
 {
 
+  /*
     var numSlime = getRandomArbitrary(-1,2);
     var numBat = getRandomArbitrary(0,3);
     var numSkeleton = getRandomArbitrary(-1,2);
@@ -995,6 +1061,10 @@ function insertaMonstruosAleatorios()
 
     for(var i = 0; i < numSkeleton; i++)
         members.push(lib.characters.monsterSkeleton);
+*/
+    members = [];
+
+   members.push(lib.characters.monsterBat);
 
     return members;
 }
@@ -1107,7 +1177,7 @@ battle.on('turn', function (data) {
 
     //5. SELECCIONAR UN OBJETIVO
     targetForm.style.display = 'none';//Modificamos el estilo del boton para que se vea por pantalla
-    var objetivos = this._charactersById;;//Array con las opciones
+    var objetivos = this._charactersById;//Array con las opciones
     var seleccionObj = targetForm.querySelector('[class=choices]');//Lugar donde deben ir las opciones(dentro de choices)
     seleccionObj.innerHTML = "";
 
@@ -1153,6 +1223,8 @@ battle.on('turn', function (data) {
          button.disabled = true;
     else
          button.disabled = false;
+
+    console.log(this);
 
     //6. SELECCIONAR UN HECHIZO///
 });

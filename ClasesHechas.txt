@@ -1,0 +1,7 @@
+EVENT EMITTER
+TURN LIST
+
+
+Creemos que no están del todo bien:
+-CharactersViews
+-Options y OptionStack
