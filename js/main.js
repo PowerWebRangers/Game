@@ -306,7 +306,8 @@ function isUndefined(arg) {
   CHARACTERS VIEW
   ---------------
 
-  Lista de los atributos de los personajes
+  Lista de personajes con sus atributos
+  Tiene funciones útiles para filtrar la lista en función de los atributos
 
 
 
@@ -377,6 +378,10 @@ CharactersView.prototype._getViewFor = function (character) {
 //-------------------------- TURN LIST -------------------------------------------------
 
 //MANAGER DE TURNOS
+/*
+  Maneja el jugador actual y a quién le toca en cada momento, teniendo en cuenta la iniciativa
+
+*/
 function TurnList() {}
 
 TurnList.prototype.reset = function (charactersById) {
@@ -598,9 +603,14 @@ Character.prototype.isDead = function () {
   return this.hp === 0;
 };
 
+//Aplica un efecto a los atributos del personaje 
 Character.prototype.applyEffect = function (effect, isAlly) {
+
+  //Se aplica efecto si se lanza a sí mismo o superamos la tirada de evasión al enemigo
   if (isAlly || d100() > this.evasion) {
     Object.keys(effect).forEach(function (affectedFeature) {
+
+      //Algunos atributos no son modificables
       var isImmune = this._immuneToEffect.indexOf(affectedFeature) > -1;
       if (!isImmune) {
         this[affectedFeature] += effect[affectedFeature];
@@ -654,40 +664,72 @@ Object.defineProperty(Character.prototype, 'evasion', {
 function Battle() {
   EventEmitter.call(this);
 
-  //Lista de Hechizos por party
+  //Lista de facciones con sus grimorios: 
+  /*
+  heroes: {health: Scroll, fireball: Scroll}
+  monsters : {health: Scroll}
+  */
   this._grimoires = {};
 
+  /*Lista de personajes por orden alfabético
+  {Wizz: Character, Wizz 2: Character}
+  Wizz: Character {name: "Wizz", party: "heroes", initiative: 4, _evasion: 50, weapon: Weapon, …}
+  Wizz 2: Character {name: "Wizz", party: "monsters", initiative: 4, _evasion: 50, weapon: Weapon, …}
+  */
   this._charactersById = {};
+
+  //Manager de turnos: Maneja el jugador actual y a quién le toca en cada momento, teniendo en cuenta la iniciativa
   this._turns = new TurnList();
 
-  
+  //Declaración de la pila de todas las acciones del juego
   this.options = new OptionsStack();
+
+  //Lista de personajes con sus atributos
   this.characters = new CharactersView();
+
 }
 Battle.prototype = Object.create(EventEmitter.prototype);
 Battle.prototype.constructor = Battle;
 
+//Get de turnlist
 Object.defineProperty(Battle.prototype, 'turnList', {
   get: function () {
     return this._turns ? this._turns.list : null;
   }
 });
 
-
+//Se le pasa la party: Un objeto que contiene las 2 facciones con sus miembros y hechizos
 Battle.prototype.setup = function (parties) {
+
+  //Inicialización de las parties
   this._grimoires = this._extractGrimoiresByParty(parties);
   this._charactersById = this._extractCharactersById(parties);
+
+  //Guarda los atributos originales que se han modificado (Empieza vacío)
+  /* {Wizz: {…}, Wizz 2: {…}}
+    Wizz:improvedEvasion:{originalEvasion: 50}
+    Wizz 2:{}
+  */
   this._states = this._resetStates(this._charactersById);
+
+  //Inicializa turno a inicio de combate
   this._turns.reset(this._charactersById);
 
+  //Inicializa CharactersView (lista de personajes) con sus atributos correspondientes (Pasa parte lógica a visual)
   this.characters.set(this._charactersById);
+
+  //Inicializa a valores iniciales la pila de opciones
   this.options.clear();
 };
 
+//Inicia el juego, me parece a mi
 Battle.prototype.start = function () {
-  this._inProgressAction = null;
-  this._stopped = false;
+  this._stopped = false;//NO SE USA JAJAJAJ SIEMPRE A FALSE
+
+  //Informamos a la parte visual de que ha empezado la batalla
   this.emit('start', this._getCharIdsByParty());
+
+  //
   this._nextTurn();
 };
 
@@ -695,13 +737,18 @@ Battle.prototype.stop = function () {
   this._stopped = true;
 };
 
-
+//Getter del ActiveCharacter
 Object.defineProperty(Battle.prototype, '_activeCharacter', {
   get: function () {
     return this._charactersById[this._turns.activeCharacterId];
   }
 });
 
+//Devuelve la Lista de facciones con sus grimorios: 
+/*
+   heroes: {health: Scroll, fireball: Scroll}
+   monsters : {health: Scroll}
+*/
 Battle.prototype._extractGrimoiresByParty = function (parties) {
   var grimoires = {};
   var partyIds = Object.keys(parties);
@@ -716,6 +763,12 @@ Battle.prototype._extractGrimoiresByParty = function (parties) {
   }
 };
 
+  /*Devuelve Lista de personajes por orden alfabético del objeto parties
+  {Wizz: Character, Wizz 2: Character}
+  Wizz: Character {name: "Wizz", party: "heroes", initiative: 4, _evasion: 50, weapon: Weapon, …}
+  Wizz 2: Character {name: "Wizz", party: "monsters", initiative: 4, _evasion: 50, weapon: Weapon, …}
+  ASIGNA LA PARTY A LA QUE PERTECENE CADA PERSONAJE
+  */
 Battle.prototype._extractCharactersById = function (parties) {
   var idCounters = {};
   var characters = [];
@@ -727,12 +780,14 @@ Battle.prototype._extractCharactersById = function (parties) {
   });
   return listToMap(characters, useUniqueName);
 
+  //Asigna la party a la que pertecene cada personaje
   function assignParty(characters, party) {
     characters.forEach(function (character) {
       character.party = party;
     });
   }
 
+  //Da un nombre único a los personajes: Wizz 1 y Wizz 2
   function useUniqueName(character) {
     var name = character.name;
     if (!(name in idCounters)) {
@@ -744,6 +799,7 @@ Battle.prototype._extractCharactersById = function (parties) {
   }
 };
 
+//Limpia los atributos originales que se hayan modificado
 Battle.prototype._resetStates = function (charactersById) {
   return Object.keys(charactersById).reduce(function (map, charId) {
     map[charId] = {};
@@ -751,6 +807,8 @@ Battle.prototype._resetStates = function (charactersById) {
   }, {});
 };
 
+//Devuelve un array de parties de personajes (Solo con un indice)
+//{heroes: Array(1), monsters: Array(1)}
 Battle.prototype._getCharIdsByParty = function () {
   var charIdsByParty = {};
   var charactersById = this._charactersById;
@@ -764,14 +822,24 @@ Battle.prototype._getCharIdsByParty = function () {
   return charIdsByParty;
 };
 
-
+//Se le llama cada vez que un jugador realiza una acción
 Battle.prototype._nextTurn = function () {
-  if (this._stopped) { return; }
-  setTimeout(function () {
+  if (this._stopped) 
+     return; 
+
+   //BUCLE PRINCIPAL (o eso creo)
+  setTimeout(function () 
+  {
+    //Comprobamos si ha acabado la batalla
     var endOfBattle = this._checkEndOfBattle();
-    if (endOfBattle) {
+
+    //Si ha acabado, mando un mensaje a la parte visual de que ha acabado
+    if (endOfBattle) 
       this.emit('end', endOfBattle);
-    } else {
+    
+    //Si no, hago cosas
+    else 
+    {
       var turn = this._turns.next();
       this._showActions();
       this.emit('turn', turn);
@@ -779,17 +847,28 @@ Battle.prototype._nextTurn = function () {
   }.bind(this), 0);
 };
 
+//Devuelve un booleano que te dice si la partida ha acabado
 Battle.prototype._checkEndOfBattle = function () {
+  //Mapa de todos los personajes 
   var allCharacters = mapValues(this._charactersById);
+  console.log(allCharacters);
 
+  //Mapa de todos los personajes vivos
   var aliveCharacters = allCharacters.filter(isAlive);
+    console.log(aliveCharacters);
+
+  //De vuelve si todos los personajes vivos pertenecen a la misma party
   var commonParty = getCommonParty(aliveCharacters);
+      console.log(commonParty);
+
   return commonParty ? { winner: commonParty } : null;
 
+  //Devuelve un booleano de si el personaje está vivo
   function isAlive(character) {
     return !character.isDead();
   }
 
+  //De vuelve si todos los personajes vivos pertenecen a la misma party
   function getCommonParty(characters) {
     return characters.reduce(function (common, character) {
       return character.party !== common ? null : common;
@@ -797,10 +876,11 @@ Battle.prototype._checkEndOfBattle = function () {
   }
 };
 
+
 Battle.prototype._showActions = function () {
   this.options.current = {
-    'attack': true,
-    'defend': true,
+    //'attack': true,
+    //'defend': true,
     'cast': true
   };
   this.options.current.on('chose', this._onAction.bind(this));
@@ -822,8 +902,10 @@ Battle.prototype._defend = function () {
   this._executeAction();
 };
 
+//Aumenta la evasión teniendo en cuenta el valor inicial, almacenado en this._states
 Battle.prototype._improveEvasion = function (targetId) {
   var states = this._states[targetId];
+
   var targetCharacter = this._charactersById[targetId];
   if (!states.improvedEvasion) {
     states.improvedEvasion = {
@@ -1250,8 +1332,6 @@ battle.on('turn', function (data) {
          button.disabled = true;
     else
          button.disabled = false;
-
-    console.log(this);
 
 
     //6. SELECCIONAR UN HECHIZO///
