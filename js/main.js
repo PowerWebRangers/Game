@@ -321,6 +321,7 @@ CharactersView.prototype._visibleFeatures = [
   'party',
   'initiative',
   'evasion',
+  'humildad',
   'hp',
   'mp',
   'maxHp',
@@ -524,15 +525,6 @@ function Item(name, effect) {
   this.effect = effect;
 }
 
-//Armas (ELIMINAR)
-function Weapon(name, damage, extraEffect) {
-  extraEffect = extraEffect || new Effect({});
-  extraEffect.hp = -damage;
-  Item.call(this, name, extraEffect);
-}
-Weapon.prototype = Object.create(Item.prototype);
-Weapon.prototype.constructor = Weapon;
-
 //Hechizos
 function Scroll(name, cost, effect, uses) {
   Item.call(this, name, effect);
@@ -589,7 +581,7 @@ function Character(name, features) {
   this.party = null;
   this.initiative = features.initiative || 0;
   this.evasion = features.evasion || 0;
-  this.weapon = features.weapon || null;
+  this.humildad = features.humildad || 0;
   this._mp = features.mp || 0;
   this._hp = features.hp || 0;
   this.maxMp = features.maxMp || this.mp;
@@ -597,7 +589,7 @@ function Character(name, features) {
 }
 
 //Atributos que no pueden cambiar
-Character.prototype._immuneToEffect = ['name', 'weapon'];
+Character.prototype._immuneToEffect = ['name'];
 
 Character.prototype.isDead = function () {
   return this.hp === 0;
@@ -613,7 +605,7 @@ Character.prototype.applyEffect = function (effect, isAlly) {
       //Algunos atributos no son modificables
       var isImmune = this._immuneToEffect.indexOf(affectedFeature) > -1;
       if (!isImmune) {
-        this[affectedFeature] += effect[affectedFeature];
+        this[affectedFeature] += (1 - this.humildad) * effect[affectedFeature];
       }
     }.bind(this));
     return true;
@@ -639,12 +631,12 @@ Object.defineProperty(Character.prototype, 'hp', {
   }
 });
 
-Object.defineProperty(Character.prototype, 'defense', {
+Object.defineProperty(Character.prototype, 'humildad', {
   get: function () {
-    return this._defense;
+    return this._humildad;
   },
   set: function (newValue) {
-    this._defense = Math.max(0, Math.min(newValue, 100));
+    this._humildad = Math.max(0, Math.min(newValue, 100));
   }
 });
 
@@ -879,8 +871,6 @@ Battle.prototype._checkEndOfBattle = function () {
 
 Battle.prototype._showActions = function () {
   this.options.current = {
-    //'attack': true,
-    //'defend': true,
     'cast': true
   };
   this.options.current.on('chose', this._onAction.bind(this));
@@ -894,6 +884,7 @@ Battle.prototype._onAction = function (action) {
   this['_' + action]();
 };
 
+/*
 Battle.prototype._defend = function () {
   var activeCharacterId = this._action.activeCharacterId;
   var newEvasion = this._improveEvasion(activeCharacterId);
@@ -925,17 +916,8 @@ Battle.prototype._restoreEvasion = function (targetId) {
   }
 };
 
-Battle.prototype._attack = function () {
-  var self = this;
-  var activeCharacter = this._activeCharacter;
-  self._showTargets(function onTarget(targetId) {
-    self._action.effect = new Effect(activeCharacter.weapon.effect);
-    self._action.targetId = targetId;
-    self._executeAction();
-    self._restoreEvasion(targetId);
-  });
-};
 
+*/
 Battle.prototype._cast = function () {
   var self = this;
   var activeCharacter = this._activeCharacter;
@@ -945,8 +927,8 @@ Battle.prototype._cast = function () {
       self._action.targetId = targetId;
       self._action.scrollName = scroll.name;
       activeCharacter.mp -= scroll.cost;
+      scroll.uses--;
       self._executeAction();
-      self._restoreEvasion(targetId);
     });
   });
 };
@@ -1010,32 +992,15 @@ Battle.prototype._showScrolls = function (onSelection) {
 
 var lib = {
   Item: Item,
-  Weapon: Weapon,
   Scroll: Scroll,
   Effect: Effect,
   Character: Character,
-
-weapons: {
-    get sword() {
-      return new Weapon('sword', 25);
-    },
-    get wand() {
-      return new Weapon('wand', 5);
-    },
-    get fangs() {
-      return new Weapon('fangs', 10);
-    },
-    get pseudopode() {
-      return new Weapon('pseudopode', 5, new Effect({ mp: -5 }));
-    }
-  },
 
   characters: {
 
     get heroTank() {
       return new Character('Tank', {
         initiative: 10,
-        weapon: lib.weapons.sword,
         evasion: 70,
         hp: 80,
         mp: 30
@@ -1045,8 +1010,8 @@ weapons: {
     get heroWizard() {
       return new Character('Wizz', {
         initiative: 4,
-        evasion: 50,
-        weapon: lib.weapons.wand,
+        evasion: 10,
+        humildad: 0.1,
         hp: 40,
         mp: 100
       });
@@ -1056,7 +1021,6 @@ weapons: {
       return new Character('skeleton', {
         initiative: 9,
         evasion: 50,
-        weapon: lib.weapons.sword,
         hp: 100,
         mp: 0
       });
@@ -1066,7 +1030,6 @@ weapons: {
       return new Character('slime', {
         initiative: 2,
         evasion: 40,
-        weapon: lib.weapons.pseudopode,
         hp: 40,
         mp: 50
       });
@@ -1076,7 +1039,6 @@ weapons: {
       return new Character('bat', {
         initiative: 30,
         evasion: 80,
-        weapon: lib.weapons.fangs,
         hp: 5,
         mp: 0
       });
@@ -1090,9 +1052,36 @@ weapons: {
     },
 
     get fireball() {
-      return new Scroll('fireball', 30, new Effect({ initiative: 35 }),1);
-    }
+      return new Scroll('fireball', 30, new Effect({ hp: -35 }),2);
+    },
 
+    get ogritoQueRota() {
+      return new Scroll('ogritoQueRota', 100, new Effect({ hp: -250 }),1);
+    },
+
+    get seppuku() {
+      return new Scroll('seppuku', 30, new Effect({ hp: -25 , evasion:50, initiative:30}),1);
+    },
+
+    get inexpugnable() {
+      return new Scroll('inexpugnable', 10, new Effect({ evasion: 30 }),5);
+    },
+
+    get puta() {
+      return new Scroll('puta', 15, new Effect({ mp: 60 }),3);
+    },
+
+
+    get enemigui() {
+      return new Scroll('enemigui', 15, new Effect({ mp: -40 }),3);
+    },
+
+    get aumentarEvasion() {
+      return new Scroll('aumentarEvasion', 15, new Effect({ evasion: 30 }),3);
+    },
+    get aumentarHumildad() {
+      return new Scroll('aumentarHumildad', 15, new Effect({ humildad: 0.1 }),3);
+    },
   }
 };
 
@@ -1172,14 +1161,22 @@ battle.setup({
 
         grimoire: [
             lib.scrolls.health,
-            lib.scrolls.fireball
+            lib.scrolls.fireball,
+            lib.scrolls.seppuku,
+            lib.scrolls.aumentarEvasion,
+            lib.scrolls.aumentarHumildad,
+
         ]
     },
     monsters: {
       
         members: insertaMonstruosAleatorios(),
         grimoire: [
-            lib.scrolls.health
+            lib.scrolls.health,
+            lib.scrolls.ogritoQueRota,    
+            lib.scrolls.inexpugnable,
+            lib.scrolls.aumentarEvasion,
+
         ]
     }
 
@@ -1210,6 +1207,19 @@ function insertar (list,listHTML,idPersonaje)
             li.dataset.charaId = idPersonaje[i]; //Añado una etiqueta a la lista de personajes [charaId]
             form.appendChild(li); //Regresa una referencia al "nodo" creado
             i++;
+
+
+            li = document.createElement('li');//lista nueva donde se van a insertar los personajes en el HTML
+            li.innerHTML += "Evasion: " + personaje.evasion;
+            form.appendChild(li); //Regresa una referencia al "nodo" creado
+
+            li = document.createElement('li');//lista nueva donde se van a insertar los personajes en el HTML
+            li.innerHTML += "Initiative: " + personaje.initiative;
+            form.appendChild(li); //Regresa una referencia al "nodo" creado
+
+            li = document.createElement('li');//lista nueva donde se van a insertar los personajes en el HTML
+            li.innerHTML += "Humilçao: " + personaje.humildad;
+            form.appendChild(li); //Regresa una referencia al "nodo" creado
         }
     
 
@@ -1263,22 +1273,6 @@ battle.on('turn', function (data) {
     //2.MOSTRAR EL PERSONAJE SELECCIONADO///
 
 
-    //3. MOSTRAR EL MENÚ DE ACCIONES DE BATALLA
-    // TODO: show battle actions form
-
-    actionForm.style.display = 'inline';//Modificamos el estilo del boton para que se vea por pantalla
-    var opciones = this.options.list();//Array con las opciones
-
-    var seleccion = actionForm.querySelector('[class=choices]');//Lugar donde deben ir las opciones(dentro de choices)
-    seleccion.innerHTML = "";
-
-    opciones.forEach(function(opcion){
-        var li = document.createElement('li');//Creamos una nueva lista
-        //Añadimos las opciones a la lista 
-        li.innerHTML = '<label><input type="radio" name="option" value=' + opcion + '> <strong>' +opcion+ '</strong></label>'
-
-        seleccion.appendChild(li);//Hace hijo al elemento seleccion de HTML
-    });
 
     //3. MOSTRAR EL MENÚ DE ACCIONES DE BATALLA///
 
@@ -1305,7 +1299,7 @@ battle.on('turn', function (data) {
 
     //6. SELECCIONAR UN HECHIZO
 
-    spellForm.style.display = 'none';//Modificamos el estilo del boton para que se vea por pantalla
+    spellForm.style.display = 'inline';//Modificamos el estilo del boton para que se vea por pantalla
     var hechizos = this._grimoires[this._activeCharacter.party];//Array con las opciones
     var seleccionHechizos = spellForm.querySelector('[class=choices]');//Lugar donde deben ir las opciones(dentro de choices)
     seleccionHechizos.innerHTML = "";
@@ -1315,7 +1309,7 @@ battle.on('turn', function (data) {
     //Insertamos en el formulario todos los hechizos que pueda lanzar el personaje
     for(var hechizo in hechizos)
     {
-        if (pjActivo.mp >= hechizos[hechizo].cost)
+        if (pjActivo.mp >= hechizos[hechizo].cost && hechizos[hechizo].uses > 0)
         {
             var li = document.createElement('li');//Creamos una nueva lista
             //Añadimos las opciones a la lista 
@@ -1345,20 +1339,8 @@ battle.on('info', function (data) {
     var effectsTxt = prettifyEffect(data.effect || {});
 
     switch(data.action){
-        case "attack":
-            if(data.success){
-                infoPanel.innerHTML='<strong>' + data.activeCharacterId + '</strong>' + " " + data.action 
-                + "ed " + '<strong>' + data.targetId + '</strong>'+ " and caused " + effectsTxt;
-            }
-            else{
-               infoPanel.innerHTML='<strong>' + data.activeCharacterId + '</strong>' + " " + data.action 
-                + "ed " + '<strong>' + data.targetId + '</strong>' +" and failed";
-            }
-            break;
-        case "defend":
-                infoPanel.innerHTML='<strong>' + data.activeCharacterId + '</strong>' + " " + data.action 
-                + "ed and his new evasion is " + data.newEvasion; 
-                break;
+      
+      
         case "cast":
             if(data.success){
                 infoPanel.innerHTML='<strong>' + data.activeCharacterId + '</strong>' + " " + data.action 
@@ -1385,7 +1367,7 @@ battle.on('end', function (data) {
     render();
 
     // TODO: display 'end of battle' message, showing who won
-    actionForm.style.display = 'none';
+    //actionForm.style.display = 'none';
 
     infoPanel.innerHTML = "Battle is over! Winners were: " + '<strong>' + data.winner + '</strong>'
     +' <button type="submit"onClick="history.go(0)">New battle?</button>';
@@ -1394,47 +1376,15 @@ battle.on('end', function (data) {
 });
 
 window.onload = function () {
-    actionForm = document.querySelector('form[name=select-action]');
     targetForm = document.querySelector('form[name=select-target]');
     spellForm = document.querySelector('form[name=select-spell]');
     infoPanel = document.querySelector('#battle-info');
-
-    actionForm.addEventListener('submit', function (evt) {
-        evt.preventDefault();
-
-        //4. SELECCIONAR ACCIÓN
-
-        // TODO: select the action chosen by the player
-        var action= actionForm.elements['option'].value;
-
-        battle.options.select(action);
-        actionForm.classList.add('required');
-        
-        // TODO: hide this menu
-
-        actionForm.style.display = 'none';
-
-        // TODO: go to either select target menu, or to the select spell menu
-
-        if(action === 'attack'){
-            targetForm.style.display = 'block';
-        }
-        else if(action === 'cast'){
-            spellForm.style.display = 'block';
-        }
-        else if(action !== 'defend'){
-            actionForm.style.display = 'block';
-        }
-
-        ///4. SELECCIONAR ACCIÓN
-
-    });
 
     //5. SELECCIONAR UN OBJETIVO
 
     targetForm.addEventListener('submit', function (evt) {
         evt.preventDefault();
-        
+
         // TODO: select the target chosen by the player
         var objetivo= targetForm.elements['target'].value;
         battle.options.select(objetivo);
@@ -1442,7 +1392,7 @@ window.onload = function () {
 
         // TODO: hide this menu
         targetForm.style.display = 'none';
-        actionForm.style.display = 'block';
+        spellForm.style.display = 'block';
 
     });
 
@@ -1455,7 +1405,7 @@ window.onload = function () {
         // TODO: hide this form
         targetForm.style.display = 'none'; // oculta el formulario de acciones
         // TODO: go to select action menu
-        actionForm.style.display = 'inline';
+        spellForm.style.display = 'inline'; // oculta el formulario de acciones
 
     });
 
@@ -1465,6 +1415,8 @@ window.onload = function () {
 
     spellForm.addEventListener('submit', function (evt) {
         evt.preventDefault();
+        battle.options.select('cast');
+
         // TODO: select the spell chosen by the player
         var hechizo= this.elements['spell'].value;
         battle.options.select(hechizo);
@@ -1476,16 +1428,6 @@ window.onload = function () {
              
     });
 
-    spellForm.querySelector('.cancel')
-    .addEventListener('click', function (evt) {
-        evt.preventDefault();
-        // TODO: cancel current battle options
-        battle.options.cancel();
-        // TODO: hide this form
-        spellForm.style.display = 'none';
-        // TODO: go to select action menu
-        actionForm.style.display = 'inline';
-    });
 
     //6. SELECCIONAR UN HECHIZO///
 
